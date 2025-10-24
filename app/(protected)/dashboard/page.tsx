@@ -33,7 +33,7 @@ import {
   PlusCircle,
 } from "lucide-react";
 import { toast } from "sonner";
-import { format, startOfDay, endOfDay, subDays } from "date-fns";
+import { format, startOfDay, endOfDay, subDays, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   Select,
@@ -352,7 +352,9 @@ export default function Dashboard() {
 
                       return (
                         <TableRow key={item.line_item_id + index}>
-                          <TableCell>{item.dv_date}</TableCell>
+                          <TableCell>
+                            {item.dv_date ? format(parseISO(item.dv_date), "dd/MM/yyyy") : "-"}
+                          </TableCell>
                           <TableCell>{item.ad_unit_name}</TableCell>
                           <TableCell className="text-right">{formatNumber(item.dv_impressions)}</TableCell>
                           <TableCell className="text-right">{formatNumber(item.dv_clicks)}</TableCell>
