@@ -301,7 +301,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
+        {/* <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
           <Card>
             <CardHeader><CardTitle>Advertisers Cadastrados</CardTitle><CardDescription>Selecione um advertiser para ver os detalhes das campanhas.</CardDescription></CardHeader>
             <CardContent>
@@ -321,7 +321,7 @@ export default function Dashboard() {
               )}
             </CardContent>
           </Card>
-        </div>
+        </div> */}
 
         {/* Tabela de dados */}
         <Card>
