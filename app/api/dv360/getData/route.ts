@@ -5,7 +5,7 @@ export async function GET(req: Request) {
     try {
         // 1. Obter a sessão do usuário
         // const apiUrl = `http://104.154.42.60/app/Services/big-query/dv_gam/retorna_dv+gam.php?start_date=${start_date}&end_date=${end_date}`;
-        const apiUrl = `http://104.154.42.60/app/Services/big-query/dv_gam/retorna_dv+gam.php?start_date=2025-10-09&end_date=2025-10-09`;
+        const apiUrl = `http://104.154.42.60/app/Services/big-query/dv360/fetch_dv360_por_horav2.php`;
         const response = await fetch(apiUrl);
         const data = await response.json();
 

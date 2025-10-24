@@ -177,20 +177,41 @@ export default function Dashboard() {
 
   // useEffect para carregar os dados da tabela
   useEffect(() => {
-    if (!since || !until) return;
+    if (!since || !until || !selectedAdvertiserId) return;
 
     const loadTableData = async () => {
       setLoadingTableData(true);
       setTableData([]); // Limpa dados antigos
 
       try {
-        const startDate = format(new Date(since), "yyyy-MM-dd");
-        const endDate = format(new Date(until), "yyyy-MM-dd");
+        // Buscar dados da nova API
+        const result = await fetchJSON<{
+          advertiser_id: string;
+          end_date: string;
+          rows: any[];
+        }>(`/api/dv360/getData`);
 
-        const result = await fetchJSON<{ data: TableDataItem[] }>(`/api/dv360/getData`);
+        // console.log(result.data.rows);
 
-        setTableData(result.data.data || []);
-        console.log(result.data.data);
+        // Mapear os dados para o formato da tabela
+        const mappedData: TableDataItem[] = result.data.rows.map((row) => ({
+          dv_date: row.Date.replace(/\//g, "-"), // formata "2025/10/24" → "2025-10-24"
+          advertiser_id: row["Advertiser ID"],
+          line_item_id: row["Line Item ID"],
+          line_item_name: row["Line Item"],
+          dv_impressions: row.Impressions,
+          dv_clicks: row.Clicks,
+          dv_revenue_usd: row["Revenue (Adv Currency)"],
+          ad_unit_name: row["Insertion Order"],
+          country_name: row.InsertionOrder?.split("|")[5]?.trim() || "",
+          gam_revenue_usd: row["Revenue eCPM (Adv Currency)"], // você pode ajustar para pegar a receita GAM real
+          gam_impressions: row.Impressions, // placeholder, se tiver dado separado do GAM
+          gam_clicks: row.Clicks, // placeholder
+          usd_to_brl: row.targetCpmReais || "1", // se não tiver, usa 1 como default
+        }));
+
+        setTableData(mappedData);
+        console.log("Mapped Table Data:", mappedData);
 
       } catch (e: any) {
         toast.error("Erro ao carregar dados da tabela", { description: e?.message });
@@ -200,7 +221,8 @@ export default function Dashboard() {
     };
 
     loadTableData();
-  }, [since, until]);
+  }, [since, until, selectedAdvertiserId]);
+
 
 
   const handleRegisterAdvertiser = async () => {
@@ -314,48 +336,35 @@ export default function Dashboard() {
               <p className="text-sm text-muted-foreground text-center p-4">Carregando dados...</p>
             ) : tableData.length > 0 ? (
               <div className="relative w-full overflow-auto">
-                <Table>
+                <Table className="w-full">
                   <TableHeader>
                     <TableRow>
+                      <TableHead>Data</TableHead>
                       <TableHead>Line Item</TableHead>
-                      <TableHead className="text-right">Receita (GAM)</TableHead>
-                      <TableHead className="text-right">Custo (DV)</TableHead>
-                      <TableHead className="text-right">Impressões (DV)</TableHead>
-                      <TableHead className="text-right">Cliques (DV)</TableHead>
-                      <TableHead className="text-right text-green-600">Lucro (R$)</TableHead>
-                      <TableHead className="text-right font-bold">ROI</TableHead>
+                      <TableHead className="text-right">DV Impressions</TableHead>
+                      <TableHead className="text-right">DV Clicks</TableHead>
+                      <TableHead className="text-right">DV Revenue (USD)</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {tableData.map((item, index) => {
-                      // Cálculos
-                      const gamRevenueUSD = parseFloat(item.gam_revenue_usd) || 0;
-                      const dvCostBRL = parseFloat(item.dv_revenue_usd) || 0;
-                      const usdToBrlRate = parseFloat(item.usd_to_brl) || 0;
-
-                      // Regra de negócio: gam_revenue / 1.000.000 * cotação
-                      const gamRevenueBRL = (gamRevenueUSD / 1000000) * usdToBrlRate;
-                      const profit = gamRevenueBRL - dvCostBRL;
-                      const roi = dvCostBRL > 0 ? profit / dvCostBRL : 0;
+                      // console.log("Linha da tabela:", item); // debug de cada linha do DV
 
                       return (
                         <TableRow key={item.line_item_id + index}>
-                          <TableCell className="font-medium">{item.line_item_name}</TableCell>
-                          <TableCell className="text-right">{formatCurrency(gamRevenueBRL)}</TableCell>
-                          <TableCell className="text-right">{formatCurrency(dvCostBRL)}</TableCell>
+                          <TableCell>{item.dv_date}</TableCell>
+                          <TableCell>{item.ad_unit_name}</TableCell>
                           <TableCell className="text-right">{formatNumber(item.dv_impressions)}</TableCell>
                           <TableCell className="text-right">{formatNumber(item.dv_clicks)}</TableCell>
-                          <TableCell className={`text-right font-semibold ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                            {formatCurrency(profit)}
-                          </TableCell>
-                          <TableCell className={`text-right font-bold ${roi >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
-                            {formatPercent(roi)}
-                          </TableCell>
+                          <TableCell className="text-right">{formatCurrency(parseFloat(item.dv_revenue_usd))}</TableCell>
                         </TableRow>
-                      )
+                      );
                     })}
                   </TableBody>
                 </Table>
+
+
+
               </div>
             ) : (
               <p className="text-sm text-muted-foreground text-center p-4">Nenhum dado encontrado para o período selecionado.</p>

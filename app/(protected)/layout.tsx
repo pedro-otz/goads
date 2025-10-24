@@ -7,10 +7,12 @@ interface ProtectedLayoutProps {
 
 const ProtectedLayout = ({ children }: ProtectedLayoutProps) => {
   return (
-    <div className="h-full w-full flex flex-col items-center">
+    <div className="h-full w-full flex flex-col items-stretch">
+
       <Navbar />
 
-      <div className="flex w-full max-w-6xl flex-1 px-4 py-6 gap-6">
+      <div className="flex w-full flex-1 px-4 py-6 gap-6">
+
         {/* Só reserva espaço no desktop */}
         <div className="hidden lg:block w-64">
           <Sidebar />
